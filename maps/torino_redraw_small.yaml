@@ -1,0 +1,14 @@
+image: torino_redraw_small_filled.png
+resolution: 0.050000
+origin: [-8, -8, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.2
+
+
+n_obs: 0
+obs_size: 0.5
+start_pose: [0, 0, 0]
+start_orientation: 1.5
+
+
