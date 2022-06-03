@@ -550,15 +550,15 @@ class Optimizer:
 
         # Initialization
         for n in range(1,(self.Track.N)+1):
-            m.delta_steer[n].value = (np.random.random()*(np.pi/3)) - np.pi/6
-            m.delta_driver_command[n].value = (np.random.random()*(2)) - 1
-            m.normal_dist[n].value = (np.random.random()*(np.amax(self.Track.width)*2)) - np.amax(self.Track.width)
-            m.local_heading[n].value = (np.random.random()*(np.pi)) - (np.pi/2)
+            # m.delta_steer[n].value = (np.random.random()*(np.pi/3)) - np.pi/6
+            # m.delta_driver_command[n].value = (np.random.random()*(2)) - 1
+            # m.normal_dist[n].value = (np.random.random()*(np.amax(self.Track.width)*2)) - np.amax(self.Track.width)
+            # m.local_heading[n].value = (np.random.random()*(np.pi)) - (np.pi/2)
             m.long_vel[n].value = 5#np.random()
-            m.lat_vel[n].value = (np.random.random()*(2)) - 1
-            m.yaw_rate[n].value = (np.random.random()*np.pi/3) - np.pi/6
-            m.steer[n].value = (np.random.random()*(np.pi/3)) - np.pi/6
-            m.driver_command[n].value = (np.random.random()*(2)) - 1
+            # m.lat_vel[n].value = (np.random.random()*(2)) - 1
+            # m.yaw_rate[n].value = (np.random.random()*np.pi/3) - np.pi/6
+            # m.steer[n].value = (np.random.random()*(np.pi/3)) - np.pi/6
+            # m.driver_command[n].value = (np.random.random()*(2)) - 1
 
 
         # Initial Conditions at n = 1
@@ -784,19 +784,18 @@ if __name__ == "__main__":
     r = 0.0
     st = 0.0
     T = 1.0
-    N = 1000
+    N =2500
     curve = np.zeros(N)
     for i in range(N):
-        curve[i] = 0.04 * np.sin(i * 2*np.pi * (1/N))
+       curve[i] = 0.04 * np.sin(i * 2*np.pi * (1/N))
     # plt.close()
     # plt.plot(curve)
     # plt.show()
     initCondition = State_parameters(delta_st, delta_T, n, mu, vx, vy, r, st, T)
-    param = Model_Parameters(Slip_AngleReg=10, Steer_Reg=5)
-    for i in range(35, 100, 5):
-        width = (float(i/100))
-        track = Track(N, 0.1, curve, Width=width, Name=("Test Track Width_" + str(width)))
-        opt = Optimizer()
-        results = opt.optimize(initCondition, Parameters=param, Temp_Track=track)
+    param = Model_Parameters(Slip_AngleReg=5, Steer_Reg=5)
+    width = 10.0
+    track = Track(N, 0.1, curve, Width=width, Name=("Test Track Width_" + str(width)))
+    opt = Optimizer()
+    results = opt.optimize(initCondition, Parameters=param, Temp_Track=track)
  
         
