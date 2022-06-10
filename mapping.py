@@ -96,7 +96,7 @@ class map:
 
         pt = start = np.array([0, 0]) #TODO: start from map position
         self.cline = [pt]
-        self.myTrack = [pt]
+        self.cline_row_coloumn = [pt]
         #th = self.stheta
         th = 0
 
@@ -117,7 +117,7 @@ class map:
             d_loc = functions.transform_coords(search_list[ind], -th)
             pt = functions.add_locations(pt, d_loc)
             self.cline.append(pt)
-            self.myTrack.append(self.xy_to_row_column(pt))
+            self.cline_row_coloumn.append(self.xy_to_row_column(pt))
 
             if show:
                 self.plot_raceline_finding()
@@ -126,7 +126,7 @@ class map:
             #print(f"Adding pt: {pt}")
 
         self.cline = np.array(self.cline)
-        self.myTrack = np.array(self.myTrack)
+        self.cline_row_coloumn = np.array(self.cline_row_coloumn)
         self.N = len(self.cline)
         #print(f"Raceline found --> n: {len(self.cline)}")
         if show:
@@ -180,23 +180,31 @@ class map:
         ds = 0.1
         self.find_centerline(True)
 
-        self.myTrack[0, :] = self.myTrack[-1, :]
-        #self.centerline[0, :] = self.centerline[-1, :]
+        self.cline_row_coloumn[0, :] = self.cline_row_coloumn[-1, :]
+        self.centerline[0, :] = self.centerline[-1, :]
 
-        rx, ry, ryaw, rk, d = cubic_spline_planner.calc_spline_course(self.myTrack[:,0], self.myTrack[:,1], ds)
+        track_coords = self.cline_row_coloumn[:, 0:2] * self.resolution 
+
+        #rx, ry, ryaw, rk, d = cubic_spline_planner.calc_spline_course(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], ds)
+        rx, ry, ryaw, rk, d = cubic_spline_planner.calc_spline_course(track_coords[:,0], track_coords[:,1], ds)
         self.track_pnts = np.array((rx,ry))
         self.curvature = rk
         self.gradients = ryaw # in rad
-        print(self.track_pnts.shape)
+        for i in range(len(rx)):
+            temp = np.arctan(ry[i]/rx[i])
+            print("Returned yaw is: {}\n" .format(np.rad2deg(ryaw[i])))
+            print("Angle from x axis is yaw is: {}\n\n" .format(np.rad2deg(temp)))
+        #print(self.track_pnts.shape)
         self.find_curvature(rx, ry)
         plt.close()
         plt.plot(self.curvature)
         plt.show()
         self.set_true_widths() #TODO: IMPOROVE WIDTH FUNCTION
 
-        plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
+        #plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
         plt.plot(rx, ry)
-        plt.plot(self.myTrack[:,0], self.myTrack[:,1], 'x')
+        #plt.plot(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], 'x')
+        plt.plot(self.cline_row_coloumn[:,0]* self.resolution , self.cline_row_coloumn[:,1]* self.resolution , 'x')
         plt.show()
 
         #self.track = opt.Track(len(rx), ds, self.curvature, 0.8, self.map_name)
@@ -237,5 +245,5 @@ if __name__=='__main__':
     #m = map('berlin') #Doesn't Work
     #m = map('f1_aut_wide') #Doesn't Work
     m = map('columbia_1') #Works
-    #m.generate_track()
-    m.find_trajectory()
+    m.generate_track()
+    #m.find_trajectory()
