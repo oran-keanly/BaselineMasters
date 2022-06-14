@@ -176,66 +176,45 @@ class map:
     
     #def generate_line(self)
 
-    def generate_track(self):
-        ds = 0.1
-        self.find_centerline(True)
+    def generate_track(self, delta_s):
+        ds = delta_s
+        self.find_centerline(False)
 
         self.cline_row_coloumn[0, :] = self.cline_row_coloumn[-1, :]
         self.centerline[0, :] = self.centerline[-1, :]
 
         track_coords = self.cline_row_coloumn[:, 0:2] * self.resolution 
 
-        #rx, ry, ryaw, rk, d = cubic_spline_planner.calc_spline_course(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], ds)
-        rx, ry, ryaw, rk, d = cubic_spline_planner.calc_spline_course(track_coords[:,0], track_coords[:,1], ds)
+        #rx, ry, ryaw, rk, dx, ddx, dy, ddy, s = cubic_spline_planner.calc_spline_course(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], ds)
+        rx, ry, ryaw, rk, dx, ddx, dy, ddy, s= cubic_spline_planner.calc_spline_course(track_coords[:,0], track_coords[:,1], ds)
+
+        self.N = len(rx)
         self.track_pnts = np.array((rx,ry))
-        self.curvature = rk
-        self.gradients = ryaw # in rad
-        for i in range(len(rx)):
-            temp = np.arctan(ry[i]/rx[i])
-            print("Returned yaw is: {}\n" .format(np.rad2deg(ryaw[i])))
-            print("Angle from x axis is yaw is: {}\n\n" .format(np.rad2deg(temp)))
-        #print(self.track_pnts.shape)
-        self.find_curvature(rx, ry)
-        plt.close()
-        plt.plot(self.curvature)
-        plt.show()
-        self.set_true_widths() #TODO: IMPOROVE WIDTH FUNCTION
-
-        #plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
-        plt.plot(rx, ry)
-        #plt.plot(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], 'x')
-        plt.plot(self.cline_row_coloumn[:,0]* self.resolution , self.cline_row_coloumn[:,1]* self.resolution , 'x')
-        plt.show()
-
-        #self.track = opt.Track(len(rx), ds, self.curvature, 0.8, self.map_name)
-        N = 1000
-        temp = np.arange(4000)
-        curve = np.zeros(N)
-        # for i in range(N):
-        #     curve[i] = 0.04 * np.sin(i * 2*np.pi * (1/N))
+        self.curvature = np.array(rk)
         # plt.close()
-        # plt.plot(temp, curve)
+        # plt.plot(self.curvature * 0.3)
         # plt.show()
-        self.track = opt.Track(N, ds, curve, 0.9, "Track Test")
+        self.yaw = ryaw # in rad
+        self.ref_angle = np.zeros(self.N)
+        self.gradient = np.zeros(self.N)
+        for i in range(len(rx)):
+            self.ref_angle[i] = np.arctan(ry[i]/rx[i])
+            if(dx[i] != 0):
+                self.gradient[i] = dy[i]/(1/dx[i])
+            else:
+                self.gradient[i] = 1000000
 
-    def find_trajectory(self):
-        self.generate_track()
-        optimise = opt.Optimizer(Track=self.track)
-        
-        delta_st = 0.0
-        delta_t = 0.0
-        n = 0.0
-        mu = 0.2
-        vx = 5.0
-        vy = 0.0
-        r = 0.0
-        st = 0.0
-        t = 1.0
-        initcondition = opt.State_parameters(delta_st, delta_t, n, mu, vx, vy, r, st, t)
-        m_param = opt.Model_Parameters( Max_Tyre_Force=500.0, Slip_AngleReg=20.0, Steer_Reg=5.0, Drive_Reg=0.0)
 
-        results = optimise.optimize(initcondition, Parameters=m_param, finalCondition=None, Temp_Track=None)
-        self.results = results
+        #self.set_true_widths() #TODO: IMPOROVE WIDTH FUNCTION
+        self.widths = 0.8
+
+        self.track = opt.Track(self.N, ds, self.curvature* 0.3, self.widths, self.track_pnts, self.yaw, self.ref_angle, self.gradient, dx, dy, self.map_name)
+        # plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
+        # plt.plot(rx, ry)
+        # plt.plot(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], 'x')
+        # plt.plot(self.cline_row_coloumn[:,0]* self.resolution , self.cline_row_coloumn[:,1]* self.resolution , 'x')
+        # plt.show()
+        return self.track
         
 
 if __name__=='__main__':
@@ -245,5 +224,6 @@ if __name__=='__main__':
     #m = map('berlin') #Doesn't Work
     #m = map('f1_aut_wide') #Doesn't Work
     m = map('columbia_1') #Works
-    m.generate_track()
+    delta_s = 0.001
+    m.generate_track(delta_s)
     #m.find_trajectory()

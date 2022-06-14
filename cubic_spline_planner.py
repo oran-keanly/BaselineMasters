@@ -174,15 +174,19 @@ def calc_spline_course(x, y, ds=0.1):
     sp = Spline2D(x, y)
     s = list(np.arange(0, sp.s[-1], ds))
 
-    rx, ry, ryaw, rk = [], [], [], []
+    rx, ry, ryaw, rk, dx, ddx, dy, ddy = [], [], [], [], [], [], [], []
     for i_s in s:
         ix, iy = sp.calc_position(i_s)
         rx.append(ix)
         ry.append(iy)
         ryaw.append(sp.calc_yaw(i_s))
         rk.append(sp.calc_curvature(i_s))
+        dx.append(sp.sx.calcd(i_s))
+        ddx.append(sp.sx.calcdd(i_s))
+        dy.append(sp.sy.calcd(i_s))
+        ddy.append(sp.sy.calcdd(i_s))
 
-    return rx, ry, ryaw, rk, s
+    return rx, ry, ryaw, rk, dx, ddx, dy, ddy, s
 
 
 def main():  # pragma: no cover
