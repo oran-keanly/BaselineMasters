@@ -187,10 +187,11 @@ class map:
 
         #rx, ry, ryaw, rk, dx, ddx, dy, ddy, s = cubic_spline_planner.calc_spline_course(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], ds)
         rx, ry, ryaw, rk, dx, ddx, dy, ddy, s= cubic_spline_planner.calc_spline_course(track_coords[:,0], track_coords[:,1], ds)
-
         self.N = len(rx)
         self.track_pnts = np.array((rx,ry))
         self.curvature = np.array(rk)
+        # with np.printoptions(threshold=np.inf):
+        #     print(self.track_pnts)
         # plt.close()
         # plt.plot(self.curvature * 0.3)
         # plt.show()
@@ -208,11 +209,12 @@ class map:
         #self.set_true_widths() #TODO: IMPOROVE WIDTH FUNCTION
         self.widths = 0.8
 
-        self.track = opt.Track(self.N, ds, self.curvature* 0.3, self.widths, self.track_pnts, self.yaw, self.ref_angle, self.gradient, dx, dy, self.map_name)
-        # plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
-        # plt.plot(rx, ry)
-        # plt.plot(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], 'x')
-        # plt.plot(self.cline_row_coloumn[:,0]* self.resolution , self.cline_row_coloumn[:,1]* self.resolution , 'x')
+        self.track = opt.Track(self.N, ds, Curvature=self.curvature, Width=self.widths, Track_Points=self.track_pnts, Yaw_Angle=self.yaw, Reference_Angle=self.ref_angle, Gradient=self.gradient, dx_perS=dx, dy_perS=dy, map_image=self.gray_im, map_height=self.map_height, map_width=self.map_width, map_resolution=self.resolution,  Name= self.map_name)
+        #plt.imshow(self.gray_im, extent=(0,(self.map_width/self.resolution),0,(self.map_height/self.resolution)))
+        # plt.imshow(self.gray_im, extent=(0,(self.map_width),0,(self.map_height)))
+        # plt.plot(self.track_pnts[0,:] , self.track_pnts[1,:]  )
+        # # plt.plot(self.cline_row_coloumn[:,0], self.cline_row_coloumn[:,1], 'x')
+        # # plt.plot(self.cline_row_coloumn[:,0]* self.resolution , self.cline_row_coloumn[:,1]* self.resolution , 'x')
         # plt.show()
         return self.track
         
@@ -224,6 +226,6 @@ if __name__=='__main__':
     #m = map('berlin') #Doesn't Work
     #m = map('f1_aut_wide') #Doesn't Work
     m = map('columbia_1') #Works
-    delta_s = 0.001
+    delta_s = 0.1
     m.generate_track(delta_s)
     #m.find_trajectory()

@@ -22,7 +22,7 @@ import copy
 
 
 class Track: 
-    def __init__(self, N, delta_S, Curvature=None, Width=None, Track_Points=None, Yaw_Angle=None, Reference_Angle=None, Gradient=None, dx_perS=None, dy_perS=None, Name=None):
+    def __init__(self, N, delta_S, Curvature=None, Width=None, Track_Points=None, Yaw_Angle=None, Reference_Angle=None, Gradient=None, dx_perS=None, dy_perS=None, map_image=None, map_height=None, map_width=None, map_resolution=None,  Name=None):
         if (type(N) == int):
             self.N = N
         else:
@@ -50,7 +50,10 @@ class Track:
         self.gradient = Gradient
         self.dx = dx_perS
         self.dy = dy_perS
-
+        self.map_image = map_image
+        self.map_height = map_height
+        self.map_width = map_width
+        self.map_resolution = map_resolution
 
     def set_constant_curvature(self, Curvature, Start=None, Stop=None):
         if (type(Curvature) == int or type(Curvature) == float):
@@ -794,13 +797,13 @@ if __name__ == "__main__":
     N =2500
     curve = np.zeros(N)
     for i in range(N):
-       curve[i] = 0.04 * np.sin(i * 2*np.pi * (1/2000))
+       curve[i] = 1.5 * np.sin(i * 2*np.pi * (1/2000))
     plt.close()
     plt.plot(curve)
     plt.show()
     initCondition = State_parameters(delta_st, delta_T, n, mu, vx, vy, r, st, T)
     param = Model_Parameters(Slip_AngleReg=5, Steer_Reg=5)
-    width = 6.0
+    width = 1.5
     track = Track(N, 0.1, curve, Width=width, Name=("Test Track Width_" + str(width)))
     opt = Optimizer()
     results = opt.optimize(initCondition, Parameters=param, Temp_Track=track)
