@@ -16,10 +16,11 @@ class auto_car:
             self.initialConditions = State_parameters(0, 0, 0, 0, 5, 0, 0, 0, 1) # my Model; 
         else:
             self.initialConditions = initialConditions
-        self.model_parameters = Model_Parameters(Slip_AngleReg=5, Steer_Reg=5)
+        self.model_parameters = Model_Parameters(Slip_AngleReg=5, Steer_Reg=5, Max_Tyre_Force=10.0)
         opt = Optimizer()
         self.Global_Reference = opt.optimize(self.initialConditions, Parameters=self.model_parameters, Temp_Track=self.global_track)
-        self.plot_global_reference()
+        self.get_gloabl_xy_reference()
+        #self.plot_global_reference()
 
     def linearly_interpolate(self, yA, yB, xA, xB, xC):
         gradient = (yB - yA)/(xB - xA)
@@ -30,7 +31,7 @@ class auto_car:
     def track_curvarture(self, s):
         for i in range((self.global_track.N)):
             if ( (self.global_track.delta_s * i ) <= s) and ( (self.global_track.delta_s * (i+1) ) >= s):
-                curvature = self.linearly_interpolate((self.global_track.delta_s * i ), (self.global_track.delta_s * (i+1) ), s, self.global_track.delta_s)
+                curvature = self.linearly_interpolate(self.global_track.curvature[i] , self.global_track.curvature[i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), s)
                 return curvature
             
         raise Exception("Unable to find track curvature at current position")
@@ -77,7 +78,6 @@ class auto_car:
         for i in range((self.global_track.N-1)):
             if ( (self.global_track.delta_s * i ) <= s) and ( (self.global_track.delta_s * (i+1) ) >= s):
                 yaw_angle = self.linearly_interpolate(self.global_track.yaw_angle[i], self.global_track.yaw_angle[i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), s)
-                track_grad = self.linearly_interpolate(self.global_track.gradient[i], self.global_track.gradient[i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), s)
                 track_x = self.linearly_interpolate(self.global_track.track_points[0, i], self.global_track.track_points[0, i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), s)
                 track_y = self.linearly_interpolate(self.global_track.track_points[1, i], self.global_track.track_points[1, i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), s)
                 break
@@ -85,28 +85,30 @@ class auto_car:
         actual_Y = n*np.cos(yaw_angle) + track_y
 
         return (actual_X, actual_Y)
-
-    def plot_global_reference(self):
+    
+    def get_gloabl_xy_reference(self):
         optimal_xy_path = np.zeros((2, self.global_track.N))
         for i in range(self.global_track.N):
             x, y = self.transform_NS_to_XY(i*self.global_track.delta_s, self.Global_Reference.n[i])
             optimal_xy_path[0, i] = x
             optimal_xy_path[1, i] = y
+        self.global_XY_reference =  optimal_xy_path
 
-        #plt.imshow(self.global_track.map_image, extent=(0,(self.global_track.map_width/self.global_track.map_resolution),0,(self.global_track.map_height/self.global_track.map_resolution)))
-        #plt.imshow(self.global_track.map_image, extent=(0,(self.global_track.map_width/self.global_track.map_resolution),0,(self.global_track.map_height/self.global_track.map_resolution)))
-        #plt.imshow(self.global_track.map_image, extent=(0,(self.global_track.map_width),0,(self.global_track.map_height)))
-        #plt.plot(optimal_xy_path[0, :] * (1/self.global_track.map_resolution), optimal_xy_path[1, :] * (1/self.global_track.map_resolution))
-        #plt.plot(optimal_xy_path[0, :], optimal_xy_path[1, :])
+    def plot_global_reference(self):
+
         plt.imshow(self.global_track.map_image, extent=(0,(self.global_track.map_width),0,(self.global_track.map_height)))
-        #plt.plot(self.global_track.track_points[0,:] , self.global_track.track_points[1,:] )
-        plt.plot(optimal_xy_path[0,:] , optimal_xy_path[1,:] )
+        plt.plot(self.global_XY_reference[0,:] , self.global_XY_reference[1,:] )
         plt.show()
-        self.Global_Reference_XY =  optimal_xy_path
     
     def car_control(self, state, time):
-        return np.array([0, 1])
-        #pass
+        if(state[0] <=0):
+            raise Exception("Car has gone backwards")
+        for i in range((self.global_track.N-1)):
+            if ( (self.global_track.delta_s * i ) <= state[0]) and ( (self.global_track.delta_s * (i+1) ) >= state[0]):
+                T = self.linearly_interpolate(self.Global_Reference.T[i], self.Global_Reference.T[i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), state[0])
+                steer = self.linearly_interpolate(self.Global_Reference.st[i], self.Global_Reference.st[i+1], (self.global_track.delta_s*i), (self.global_track.delta_s*(i+1)), state[0]) 
+                break
+        return np.array([steer, T])
 
     def update_local_plan(self, state):
         pass

@@ -564,7 +564,7 @@ class Optimizer:
             # m.delta_driver_command[n].value = (np.random.random()*(2)) - 1
             # m.normal_dist[n].value = (np.random.random()*(np.amax(self.Track.width)*2)) - np.amax(self.Track.width)
             # m.local_heading[n].value = (np.random.random()*(np.pi)) - (np.pi/2)
-            m.long_vel[n].value = 5#np.random()
+            m.long_vel[n].value = initCondition.vx#np.random()
             # m.lat_vel[n].value = (np.random.random()*(2)) - 1
             # m.yaw_rate[n].value = (np.random.random()*np.pi/3) - np.pi/6
             # m.steer[n].value = (np.random.random()*(np.pi/3)) - np.pi/6
